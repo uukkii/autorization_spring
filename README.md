@@ -1,47 +1,42 @@
-## Домашнее задание к занятию 7.2: REST
+## Домашнее задание к занятию 7.4: Разворачивание Spring Boot приложений (nginx, systemd, firewall, journalctl)
 
-### Задача Сервис авторизации
+### Задача Прокси на nginx.
 
 **v. 1.0**
 
 Задание реализовано:
 
-- Точка входа в программу - `Application.java`
+1. В nginx.conf добавлена следующая конфигурация:
 
-- В пакете `ru.netology.authorization_spring.authorities` содержится **ENUM** `Authorities` с 
-перечислением модификаторов доступа.
-
-- В пакете `ru.netology.authorization_spring.controller` содержится класс контроллера 
-`AuthorizationController`, который содержит в себе маппинг и два хэндлера исключений.
-
-- В пакете `ru.netology.authorization_spring.exceptions` содержатся классы исключений - 
-`InvalidCredentials` и `UnauthorizedUser`.
-
-- В пакете `ru.netology.authorization_spring.repository` находится класс репозитория UserRepository, содержащий метод
-`public List<Authorities> getUserAuthorities(String user, String password)`, который произодит записывает
-модификаторы доступа пользователей в список. 
-В случае незаполнения поля **"user"** или **"password"**, выбрасывается исключение `InvalidCredentials`.
-В случае отсуствия пользователя в базе или допущена ошибка при вводе пароля - выбрасывается 
-исключение `UnauthorizedUser`.
-
-- В пакете `ru.netology.authorization_spring.service` содержится класс сервиса `AuthorizationService`.
-
-После запуска сервера: 
-1. На **GET-запрос** `localhost:8080/authorize?user=admin&password=admin` получаем ответ _200 OK_:
 ```
-[
-"READ",
-"WRITE",
-"DELETE"
-]
+location /singin {
+            root   html;
+            index  singin.html;
+        }
+
+        location / {
+        proxy_pass http://localhost:8080;
+        }
 ```
 
-2. На **GET-запрос** `localhost:8080/authorize?user=admin&password=user` получаем ответ _401 Unauthorized_:
-```   
-Unknown user admin
-```
+В результате после перехода по адресу https://localhost/singin.html появляется html-форма, находящаяся
+по адресу `.../nginx/html/singin.html`.
 
-3. На **GET-запрос** `localhost:8080/authorize?user=&password=` получаем ответ _400 Bad Request_:
+Сам файл **nginx.conf** добавлен в репозиторий.
+
+3. В `.../nginx/html` корневой папки **nginx** добавлен файл **singin.html** (также вложен в репозиторий):
 ```
-User name or password is empty
+<html>
+    <body>
+        <h1>Sign in form</h1>
+
+        <form action="/authorize" method="get" target="_blank">
+          <label for="user">User name:</label>
+          <input type="text" id="user" name="user"><br><br>
+          <label for="password">Password:</label>
+          <input type="text" id="password" name="password"><br><br>
+          <button type="submit">Submit</button>
+        </form>
+    </body>
+</html>
 ```
